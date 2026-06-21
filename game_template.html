@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #4a3427;
+      --muted: #806b5f;
+      --paper: #fff8ed;
+      --field: #fffaf0;
+      --line: #d7aa62;
+      --rose: #ef6b73;
+      --gold: #f2bd48;
+      --leaf: #77a845;
+      --sky: #5a9dd8;
+      --violet: #8a72c6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", system-ui, sans-serif;
+      overflow: hidden;
+    }
+
+    .wrap {
+      width: min(960px, 100vw);
+      margin: 0 auto;
+      padding: 10px 14px 14px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 8px;
+    }
+
+    .title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--ink);
+      font-size: clamp(27px, 5vw, 54px);
+      line-height: 0.95;
+      letter-spacing: 0;
+      text-shadow:
+        0 3px 0 #fff,
+        0 6px 14px rgba(78, 56, 30, 0.18);
+      white-space: nowrap;
+    }
+
+    .tag {
+      color: var(--leaf);
+      font-weight: 900;
+      font-size: clamp(17px, 3vw, 31px);
+      line-height: 1;
+      text-shadow:
+        0 2px 0 #fff,
+        0 5px 12px rgba(90, 130, 48, 0.24);
+      white-space: nowrap;
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(82px, 1fr));
+      gap: 8px;
+      width: min(390px, 100%);
+    }
+
+    .meter {
+      min-height: 58px;
+      padding: 6px 9px;
+      border: 2px solid rgba(122, 87, 53, 0.2);
+      border-bottom-width: 4px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .meter span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .meter strong {
+      display: block;
+      margin-top: 2px;
+      color: var(--ink);
+      font-size: 24px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .game {
+      display: grid;
+      grid-template-columns: minmax(0, 580px) minmax(210px, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .stage {
+      position: relative;
+      width: min(580px, 100%);
+      margin: 0 auto;
+      padding: 12px;
+      border: 3px solid rgba(126, 88, 52, 0.32);
+      border-bottom-width: 6px;
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,248,235,0.92)),
+        repeating-linear-gradient(90deg, rgba(215,170,98,0.12) 0 1px, transparent 1px 38px);
+      box-shadow: 0 10px 28px rgba(100, 73, 42, 0.14);
+      touch-action: none;
+      user-select: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 52 / 66;
+      border-radius: 6px;
+      background: var(--field);
+      cursor: pointer;
+    }
+
+    .side {
+      display: grid;
+      gap: 10px;
+    }
+
+    .nextBox,
+    .legend,
+    .controls {
+      border: 2px solid rgba(122, 87, 53, 0.2);
+      border-bottom-width: 4px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .nextBox {
+      min-height: 152px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 94px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .nextIcon {
+      width: 88px;
+      height: 88px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #fff8eb;
+      border: 2px dashed rgba(126, 88, 52, 0.2);
+      overflow: hidden;
+    }
+
+    .nextIcon img {
+      max-width: 88px;
+      max-height: 88px;
+      transform: rotate(-10deg);
+      filter: drop-shadow(0 5px 5px rgba(73, 47, 30, 0.22));
+    }
+
+    .nextText span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .nextText strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    .legend {
+      padding: 9px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .legendRow {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr) auto;
+      gap: 7px;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--ink);
+    }
+
+    .swatch {
+      width: 28px;
+      height: 21px;
+      border-radius: 7px;
+      border: 2px dashed currentColor;
+      background: color-mix(in srgb, currentColor 18%, white);
+    }
+
+    .legendRow b {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding: 9px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 8px;
+      min-height: 42px;
+      background: var(--ink);
+      color: #fffaf2;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.18);
+    }
+
+    button.secondary {
+      background: var(--sky);
+    }
+
+    button.music {
+      background: var(--leaf);
+      grid-column: 1 / -1;
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.18);
+    }
+
+    .message {
+      min-height: 38px;
+      padding: 9px 10px;
+      border-left: 5px solid var(--leaf);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.58);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .credit {
+      margin: -3px 0 9px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.45;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .credit a {
+      color: var(--sky);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .over {
+      position: absolute;
+      inset: 12px;
+      display: none;
+      place-items: center;
+      border-radius: 6px;
+      background: rgba(255, 248, 237, 0.78);
+      backdrop-filter: blur(4px);
+      z-index: 5;
+      text-align: center;
+      color: var(--ink);
+      font-weight: 900;
+    }
+
+    .over.show {
+      display: grid;
+    }
+
+    .overPanel {
+      width: min(330px, 88%);
+      padding: 18px 18px 16px;
+      border: 3px solid rgba(122, 87, 53, 0.25);
+      border-bottom-width: 6px;
+      border-radius: 8px;
+      background: #fffaf2;
+      box-shadow: 0 14px 30px rgba(81, 57, 34, 0.2);
+    }
+
+    .overPanel strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 30px;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        overflow: auto;
+      }
+      .wrap {
+        padding: 8px;
+      }
+      .topbar,
+      .game {
+        grid-template-columns: 1fr;
+      }
+      .hud {
+        width: 100%;
+        grid-template-columns: repeat(3, 1fr);
+      }
+      h1 {
+        font-size: clamp(25px, 8vw, 42px);
+      }
+      .tag {
+        font-size: clamp(16px, 5vw, 24px);
+      }
+      .side {
+        grid-template-columns: 1fr;
+      }
+      .nextBox {
+        min-height: 116px;
+      }
+      .legend {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <h1>ずっこけぬこ</h1>
+        <div class="tag">ゲーム</div>
+      </div>
+      <div class="hud" aria-live="polite">
+        <div class="meter"><span>スコア</span><strong id="score">0</strong></div>
+        <div class="meter"><span>ベスト</span><strong id="best">0</strong></div>
+        <div class="meter"><span>合体</span><strong id="combo">0</strong></div>
+      </div>
+    </div>
+
+    <div class="credit">
+      BGM: のら猫ミケ太の日常 / DOVA-SYNDROME OFFICIAL YouTube CHANNEL
+      <a href="https://www.youtube.com/watch?v=vwqzLQu3kvc" target="_blank" rel="noreferrer">https://www.youtube.com/watch?v=vwqzLQu3kvc</a>
+    </div>
+
+    <div class="game">
+      <div class="stage" id="stage">
+        <canvas id="game" width="520" height="660"></canvas>
+        <div class="over" id="over">
+          <div class="overPanel">
+            <strong>GAME Oニャー</strong>
+            <div id="finalScore">スコア 0</div>
+            <button id="again" style="margin-top:14px;width:100%;">もう一回</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="nextBox">
+          <div class="nextIcon"><img id="nextImg" alt="" src="__NUKO_IMAGE__" /></div>
+          <div class="nextText">
+            <span>つぎ</span>
+            <strong id="nextName">すんごい小さいぬこ</strong>
+          </div>
+        </div>
+        <div class="legend" id="legend"></div>
+        <div class="controls">
+          <button id="reset">リセット</button>
+          <button class="secondary" id="pause">一時停止</button>
+          <button class="music" id="music">BGM OFF</button>
+        </div>
+        <div class="message" id="message">同じ大きさのぬこ同士で、ひとまわり大きなぬこへ。</div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+  __MATTER_JS__
+  </script>
+  <script>
+  (() => {
+    const { Engine, World, Bodies, Body, Events, Composite } = Matter;
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const stage = document.getElementById("stage");
+    const scoreEl = document.getElementById("score");
+    const bestEl = document.getElementById("best");
+    const comboEl = document.getElementById("combo");
+    const nextNameEl = document.getElementById("nextName");
+    const nextImg = document.getElementById("nextImg");
+    const legendEl = document.getElementById("legend");
+    const over = document.getElementById("over");
+    const finalScore = document.getElementById("finalScore");
+    const resetBtn = document.getElementById("reset");
+    const againBtn = document.getElementById("again");
+    const pauseBtn = document.getElementById("pause");
+    const musicBtn = document.getElementById("music");
+    const message = document.getElementById("message");
+
+    const W = 520;
+    const H = 660;
+    const DROP_Y = 58;
+    const DANGER_Y = 112;
+    const DANGER_HOLD_MS = 950;
+    const ASSET = "__NUKO_IMAGE__";
+    const MUSIC = "__BGM_AUDIO__";
+    const nuko = new Image();
+    nuko.src = ASSET;
+    const bgm = new Audio(MUSIC);
+    bgm.loop = true;
+    bgm.volume = 0.34;
+
+    const levels = [
+      { name: "すんごい小さいぬこ", radius: 21, score: 10, color: "#ef6b73" },
+      { name: "ちいさいぬこ", radius: 39, score: 25, color: "#f2bd48" },
+      { name: "中くらいのぬこ", radius: 58, score: 60, color: "#77a845" },
+      { name: "大きいぬこ", radius: 76, score: 140, color: "#5a9dd8" },
+      { name: "かなり大きいぬこ", radius: 94, score: 320, color: "#8a72c6" },
+      { name: "どっしりぬこ", radius: 113, score: 720, color: "#c06f43" },
+      { name: "でかでかぬこ", radius: 131, score: 1600, color: "#4f7f76" },
+    ];
+    const spawnBag = [0, 0, 1, 1, 2, 2, 3];
+
+    let engine;
+    let bodies;
+    let particles;
+    let score = 0;
+    function readBest() {
+      try {
+        return Number(localStorage.getItem("zuccoke-nuko-best") || 0);
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    function saveBest(value) {
+      try {
+        localStorage.setItem("zuccoke-nuko-best", String(value));
+      } catch (_) {
+      }
+    }
+
+    function readMusic() {
+      try {
+        return localStorage.getItem("zuccoke-nuko-bgm") === "on";
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function saveMusic(value) {
+      try {
+        localStorage.setItem("zuccoke-nuko-bgm", value ? "on" : "off");
+      } catch (_) {
+      }
+    }
+
+    function updateMusicButton() {
+      musicBtn.textContent = musicEnabled ? "BGM ON" : "BGM OFF";
+      musicBtn.style.opacity = musicEnabled ? "1" : "0.72";
+    }
+
+    async function startMusic() {
+      if (!musicEnabled) return;
+      try {
+        await bgm.play();
+      } catch (_) {
+      }
+    }
+
+    function stopMusic() {
+      bgm.pause();
+    }
+
+    let best = readBest();
+    let combo = 0;
+    let nextLevel = 0;
+    let pointerX = W / 2;
+    let canDrop = true;
+    let paused = false;
+    let gameOver = false;
+    let lastDropAt = 0;
+    let dangerSince = 0;
+    let raf = 0;
+    let lastTime = 0;
+    let audioCtx = null;
+    let musicEnabled = readMusic();
+
+    function chooseLevel() {
+      return spawnBag[(Math.random() * spawnBag.length) | 0];
+    }
+
+    function makeLegend() {
+      legendEl.innerHTML = "";
+      levels.forEach((level, index) => {
+        const row = document.createElement("div");
+        row.className = "legendRow";
+        row.style.color = level.color;
+        row.innerHTML = `<span class="swatch"></span><span>${level.name}</span><b>${index + 1}</b>`;
+        legendEl.appendChild(row);
+      });
+    }
+
+    function resizeCanvas() {
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function updateHud() {
+      scoreEl.textContent = String(score);
+      bestEl.textContent = String(best);
+      comboEl.textContent = String(combo);
+      nextNameEl.textContent = levels[nextLevel].name;
+      const previewSize = Math.max(34, Math.min(88, levels[nextLevel].radius * 2.15));
+      nextImg.style.width = `${previewSize}px`;
+      nextImg.style.height = "auto";
+    }
+
+    function chirp(freq = 420, duration = 0.045, type = "triangle", gain = 0.035) {
+      try {
+        audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const vol = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        vol.gain.value = gain;
+        osc.connect(vol);
+        vol.connect(audioCtx.destination);
+        osc.start();
+        vol.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (_) {
+      }
+    }
+
+    function addParticles(x, y, color, count = 14) {
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1.5 + Math.random() * 4.2;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 1,
+          life: 32 + Math.random() * 18,
+          color,
+          r: 2 + Math.random() * 3,
+        });
+      }
+    }
+
+    function createWalls() {
+      const wallOpts = {
+        isStatic: true,
+        restitution: 0.04,
+        friction: 0.9,
+        render: { visible: false },
+      };
+      World.add(engine.world, [
+        Bodies.rectangle(W / 2, H + 26, W + 92, 52, wallOpts),
+        Bodies.rectangle(-24, H / 2, 48, H + 120, wallOpts),
+        Bodies.rectangle(W + 24, H / 2, 48, H + 120, wallOpts),
+      ]);
+    }
+
+    function spawn(levelIndex, x, y, angle = 0) {
+      const level = levels[levelIndex];
+      const body = Bodies.circle(x, y, level.radius, {
+        label: "nuko",
+        restitution: 0.14,
+        friction: 0.86,
+        frictionStatic: 0.95,
+        frictionAir: 0.018,
+        density: 0.0018 + levelIndex * 0.00028,
+        slop: 0.02,
+      });
+      Body.setAngle(body, angle);
+      Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.07);
+      body.plugin = { level: levelIndex, merging: false, born: performance.now() };
+      bodies.set(body.id, body);
+      World.add(engine.world, body);
+      return body;
+    }
+
+    function drop() {
+      if (!canDrop || paused || gameOver) return;
+      startMusic();
+      const level = nextLevel;
+      const x = Math.max(levels[level].radius + 8, Math.min(W - levels[level].radius - 8, pointerX));
+      spawn(level, x, DROP_Y, (Math.random() - 0.5) * 0.35);
+      nextLevel = chooseLevel();
+      canDrop = false;
+      lastDropAt = performance.now();
+      updateHud();
+      chirp(230, 0.035, "sine", 0.025);
+      window.setTimeout(() => {
+        canDrop = true;
+      }, 460);
+    }
+
+    function merge(a, b) {
+      if (gameOver || !bodies.has(a.id) || !bodies.has(b.id)) return;
+      const levelIndex = a.plugin.level;
+      if (levelIndex !== b.plugin.level || a.plugin.merging || b.plugin.merging) return;
+      a.plugin.merging = true;
+      b.plugin.merging = true;
+      const x = (a.position.x + b.position.x) / 2;
+      const y = (a.position.y + b.position.y) / 2;
+      const next = Math.min(levelIndex + 1, levels.length - 1);
+      World.remove(engine.world, a);
+      World.remove(engine.world, b);
+      bodies.delete(a.id);
+      bodies.delete(b.id);
+      score += levels[levelIndex].score;
+      combo += 1;
+      if (levelIndex < levels.length - 1) {
+        const merged = spawn(next, x, y, (a.angle + b.angle) / 2);
+        Body.setVelocity(merged, {
+          x: (a.velocity.x + b.velocity.x) * 0.36,
+          y: Math.min(0, (a.velocity.y + b.velocity.y) * 0.18 - 1.6),
+        });
+        addParticles(x, y, levels[next].color, 16);
+        chirp(320 + next * 110, 0.055, "triangle", 0.04);
+        message.textContent = `${levels[next].name} にずっこけ合体`;
+      } else {
+        score += 620;
+        addParticles(x, y, levels[levelIndex].color, 32);
+        chirp(880, 0.08, "sine", 0.05);
+        message.textContent = "でかでかぬこ、はじけるボーナス";
+      }
+      best = Math.max(best, score);
+      saveBest(best);
+      updateHud();
+    }
+
+    function bindCollisions() {
+      Events.on(engine, "collisionStart", (event) => {
+        for (const pair of event.pairs) {
+          const a = pair.bodyA;
+          const b = pair.bodyB;
+          if (a.label === "nuko" && b.label === "nuko") {
+            window.setTimeout(() => merge(a, b), 0);
+          }
+        }
+      });
+    }
+
+    function pointerFromEvent(event) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+      pointerX = ((clientX - rect.left) / rect.width) * W;
+      pointerX = Math.max(28, Math.min(W - 28, pointerX));
+    }
+
+    function checkGameOver(now) {
+      let crowdedOverLine = false;
+      bodies.forEach((body) => {
+        const level = levels[body.plugin.level] ?? levels[0];
+        const age = now - body.plugin.born;
+        const safelyPastDropSlot = body.position.y > DROP_Y + level.radius * 0.45;
+        const visualTop = body.position.y - level.radius * 1.21;
+        if (
+          age > 1200 &&
+          safelyPastDropSlot &&
+          visualTop < DANGER_Y &&
+          Math.abs(body.velocity.y) < 1.4 &&
+          Math.abs(body.velocity.x) < 1.8
+        ) {
+          crowdedOverLine = true;
+        }
+      });
+      if (!crowdedOverLine) {
+        dangerSince = 0;
+        return;
+      }
+      dangerSince ||= now;
+      if (now - dangerSince > DANGER_HOLD_MS) {
+        endGame();
+      }
+    }
+
+    function endGame() {
+      gameOver = true;
+      over.classList.add("show");
+      finalScore.textContent = `スコア ${score}`;
+      message.textContent = "注意線にぬこが溜まりました";
+      chirp(120, 0.12, "sawtooth", 0.04);
+    }
+
+    function drawNuko(body, alpha = 1) {
+      const level = levels[body.plugin.level ?? body.level ?? 0];
+      const radius = level.radius;
+      const width = radius * 2.65;
+      const height = radius * 2.42;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(body.position.x, body.position.y);
+      ctx.rotate(body.angle);
+      ctx.fillStyle = "rgba(67, 45, 31, 0.16)";
+      ctx.beginPath();
+      ctx.ellipse(0, radius * 0.72, radius * 0.96, radius * 0.22, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.drawImage(nuko, -width / 2, -height / 2, width, height);
+      ctx.restore();
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "#fffaf0";
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = "#fff3da";
+      ctx.fillRect(0, H - 34, W, 34);
+      ctx.strokeStyle = "rgba(122, 87, 53, 0.24)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, H - 35);
+      ctx.lineTo(W, H - 35);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(239, 107, 115, 0.42)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([9, 7]);
+      ctx.beginPath();
+      ctx.moveTo(18, DANGER_Y);
+      ctx.lineTo(W - 18, DANGER_Y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "rgba(239, 107, 115, 0.72)";
+      ctx.font = "900 13px 'Yu Gothic UI', sans-serif";
+      ctx.fillText("ここまできたらずっこけ注意", 24, DANGER_Y - 10);
+
+      ctx.strokeStyle = "rgba(122, 87, 53, 0.18)";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(1.5, 1.5, W - 3, H - 3);
+    }
+
+    function drawPreview() {
+      if (!canDrop || paused || gameOver) return;
+      const level = levels[nextLevel];
+      const ghost = {
+        position: {
+          x: Math.max(level.radius + 8, Math.min(W - level.radius - 8, pointerX)),
+          y: DROP_Y,
+        },
+        angle: Math.sin(performance.now() * 0.004) * 0.1,
+        plugin: { level: nextLevel },
+      };
+      drawNuko(ghost, 0.55);
+      ctx.strokeStyle = level.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(ghost.position.x, 12);
+      ctx.lineTo(ghost.position.x, DROP_Y + level.radius + 14);
+      ctx.stroke();
+    }
+
+    function drawParticles() {
+      particles = particles.filter((p) => p.life > 0);
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.12;
+        p.life -= 1;
+        ctx.globalAlpha = Math.max(0, p.life / 42);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function render(now) {
+      if (!paused && !gameOver) {
+        const dt = lastTime ? Math.min(33, now - lastTime) : 16.7;
+        Engine.update(engine, dt);
+        checkGameOver(now);
+      }
+      lastTime = now;
+      drawBackground();
+      drawPreview();
+      const all = Array.from(bodies.values()).sort((a, b) => a.position.y - b.position.y);
+      all.forEach((body) => drawNuko(body, 1));
+      drawParticles();
+      raf = requestAnimationFrame(render);
+    }
+
+    function reset() {
+      cancelAnimationFrame(raf);
+      engine = Engine.create();
+      engine.gravity.y = 0.92;
+      bodies = new Map();
+      particles = [];
+      score = 0;
+      combo = 0;
+      nextLevel = chooseLevel();
+      canDrop = true;
+      paused = false;
+      gameOver = false;
+      lastDropAt = 0;
+      dangerSince = 0;
+      lastTime = 0;
+      pauseBtn.textContent = "一時停止";
+      over.classList.remove("show");
+      message.textContent = "同じ大きさのぬこ同士で、ひとまわり大きなぬこへ。";
+      createWalls();
+      bindCollisions();
+      updateHud();
+      raf = requestAnimationFrame(render);
+    }
+
+    canvas.addEventListener("pointermove", pointerFromEvent);
+    canvas.addEventListener("pointerdown", (event) => {
+      pointerFromEvent(event);
+      drop();
+    });
+    canvas.addEventListener("touchmove", (event) => {
+      pointerFromEvent(event);
+      event.preventDefault();
+    }, { passive: false });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft") pointerX -= 24;
+      if (event.key === "ArrowRight") pointerX += 24;
+      if (event.key === " " || event.key === "Enter") drop();
+      pointerX = Math.max(28, Math.min(W - 28, pointerX));
+    });
+    resetBtn.addEventListener("click", reset);
+    againBtn.addEventListener("click", reset);
+    musicBtn.addEventListener("click", () => {
+      musicEnabled = !musicEnabled;
+      saveMusic(musicEnabled);
+      updateMusicButton();
+      if (musicEnabled) {
+        startMusic();
+        message.textContent = "BGM ON";
+      } else {
+        stopMusic();
+        message.textContent = "BGM OFF";
+      }
+    });
+    pauseBtn.addEventListener("click", () => {
+      if (gameOver) return;
+      paused = !paused;
+      pauseBtn.textContent = paused ? "再開" : "一時停止";
+      message.textContent = paused ? "ぬこ休憩中" : "再開しました";
+    });
+    window.addEventListener("resize", resizeCanvas);
+
+    makeLegend();
+    resizeCanvas();
+    updateMusicButton();
+    reset();
+  })();
+  </script>
+</body>
+</html>
