@@ -407,7 +407,7 @@
 <body>
   <div class="wrap">
     <div class="languageBar">
-      <label id="languageLabel" for="language">言語</label>
+      <label id="languageLabel" for="language">Language</label>
       <select id="language" aria-label="Language">
         <option value="ja">日本語</option>
         <option value="en">English</option>
@@ -853,7 +853,7 @@
     function applyLanguage() {
       document.documentElement.lang = currentLang;
       languageSelect.value = currentLang;
-      languageLabel.textContent = t("language");
+      languageLabel.textContent = "Language";
       titleText.textContent = t("title");
       tagText.textContent = t("tag");
       scoreLabel.textContent = t("score");
