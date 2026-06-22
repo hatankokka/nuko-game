@@ -309,6 +309,25 @@
       text-underline-offset: 2px;
     }
 
+    .originNote {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.58);
+      border-left: 5px solid var(--gold);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    .originNote a {
+      color: var(--sky);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
     .over {
       position: absolute;
       inset: 12px;
@@ -448,6 +467,11 @@
         <div class="message" id="message">同じ大きさのぬこ同士で、ひとまわり大きなぬこへ。</div>
       </aside>
     </div>
+
+    <div class="originNote">
+      <div id="originNoteText">ずっこけぬこは、“ぺろり”さんの投稿が初ネタです。</div>
+      <a href="https://x.com/maid_Pelori" target="_blank" rel="noreferrer">https://x.com/maid_Pelori</a>
+    </div>
   </div>
 
   <script>
@@ -482,6 +506,7 @@
     const musicBtn = document.getElementById("music");
     const message = document.getElementById("message");
     const nextLabel = document.getElementById("nextLabel");
+    const originNoteText = document.getElementById("originNoteText");
 
     const W = 520;
     const H = 660;
@@ -521,6 +546,7 @@
         pausedMessage: "ぬこ休憩中",
         resumedMessage: "再開しました",
         danger: "ここまできたらずっこけ注意",
+        originNote: "ずっこけぬこは、“ぺろり”さんの投稿が初ネタです。",
         levels: ["すんごい小さいぬこ", "ちいさいぬこ", "中くらいのぬこ", "大きいぬこ", "かなり大きいぬこ", "どっしりぬこ", "でかでかぬこ"],
       },
       en: {
@@ -546,6 +572,7 @@
         pausedMessage: "Nuko break",
         resumedMessage: "Resumed",
         danger: "Wobble warning line",
+        originNote: "Zukkoke Nuko was originally inspired by a post by “Perori”.",
         levels: ["Very tiny nuko", "Small nuko", "Medium nuko", "Large nuko", "Very large nuko", "Heavy nuko", "Huge nuko"],
       },
       fr: {
@@ -571,6 +598,7 @@
         pausedMessage: "Pause nuko",
         resumedMessage: "Repris",
         danger: "Ligne d'alerte",
+        originNote: "Zukkoke Nuko est inspiré à l'origine d'une publication de « Perori ».",
         levels: ["Nuko minuscule", "Petit nuko", "Nuko moyen", "Grand nuko", "Très grand nuko", "Nuko lourd", "Nuko géant"],
       },
       ko: {
@@ -596,6 +624,7 @@
         pausedMessage: "누코 휴식 중",
         resumedMessage: "재개했습니다",
         danger: "여기부터 넘어짐 주의",
+        originNote: "즈코케 누코의 원래 아이디어는 “ぺろり”님의 게시물입니다.",
         levels: ["아주 작은 누코", "작은 누코", "중간 누코", "큰 누코", "꽤 큰 누코", "묵직한 누코", "거대 누코"],
       },
       "zh-CN": {
@@ -621,6 +650,7 @@
         pausedMessage: "猫猫休息中",
         resumedMessage: "已继续",
         danger: "到这里就要小心摔倒",
+        originNote: "摔倒猫猫的原始灵感来自“ぺろり”さん的投稿。",
         levels: ["超小猫猫", "小猫猫", "中等猫猫", "大猫猫", "很大猫猫", "厚重猫猫", "超大猫猫"],
       },
       "zh-TW": {
@@ -646,6 +676,7 @@
         pausedMessage: "貓貓休息中",
         resumedMessage: "已繼續",
         danger: "到這裡就要小心跌倒",
+        originNote: "跌倒貓貓的原始靈感來自「ぺろり」さん的投稿。",
         levels: ["超小貓貓", "小貓貓", "中等貓貓", "大貓貓", "很大貓貓", "厚重貓貓", "超大貓貓"],
       },
       th: {
@@ -671,6 +702,7 @@
         pausedMessage: "นุโกะพักอยู่",
         resumedMessage: "เล่นต่อแล้ว",
         danger: "ถึงเส้นนี้ต้องระวัง",
+        originNote: "Zukkoke Nuko ได้แรงบันดาลใจแรกจากโพสต์ของ “ぺろり”",
         levels: ["นุโกะจิ๋วมาก", "นุโกะเล็ก", "นุโกะกลาง", "นุโกะใหญ่", "นุโกะใหญ่มาก", "นุโกะหนักแน่น", "นุโกะยักษ์"],
       },
       id: {
@@ -696,6 +728,7 @@
         pausedMessage: "Nuko istirahat",
         resumedMessage: "Dilanjutkan",
         danger: "Garis peringatan jatuh",
+        originNote: "Zukkoke Nuko pertama kali terinspirasi dari postingan “Perori”.",
         levels: ["Nuko sangat kecil", "Nuko kecil", "Nuko sedang", "Nuko besar", "Nuko sangat besar", "Nuko berat", "Nuko raksasa"],
       },
       vi: {
@@ -721,6 +754,7 @@
         pausedMessage: "Nuko đang nghỉ",
         resumedMessage: "Đã tiếp tục",
         danger: "Vạch cảnh báo ngã",
+        originNote: "Zukkoke Nuko ban đầu được lấy cảm hứng từ bài đăng của “Perori”.",
         levels: ["Nuko siêu nhỏ", "Nuko nhỏ", "Nuko vừa", "Nuko lớn", "Nuko rất lớn", "Nuko nặng", "Nuko khổng lồ"],
       },
     };
@@ -826,6 +860,7 @@
       bestLabel.textContent = t("best");
       comboLabel.textContent = t("combo");
       nextLabel.textContent = t("next");
+      originNoteText.textContent = t("originNote");
       gameOverTitle.textContent = t("gameOverTitle");
       resetBtn.textContent = t("reset");
       againBtn.textContent = t("again");

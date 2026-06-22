@@ -46,4 +46,4 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-components.html(html, height=1040, scrolling=False)
+components.html(html, height=1160, scrolling=False)
