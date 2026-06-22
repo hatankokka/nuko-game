@@ -27,7 +27,7 @@
       min-height: 100%;
       background: var(--paper);
       color: var(--ink);
-      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", system-ui, sans-serif;
+      font-family: Arial, system-ui, "Segoe UI", "Noto Sans", "Noto Sans JP", "Noto Sans Thai", "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
       overflow: hidden;
     }
 
@@ -35,6 +35,28 @@
       width: min(960px, 100vw);
       margin: 0 auto;
       padding: 10px 14px 14px;
+    }
+
+    .languageBar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .languageBar select {
+      min-width: 168px;
+      min-height: 34px;
+      border: 2px solid rgba(122, 87, 53, 0.22);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--ink);
+      font: inherit;
+      padding: 4px 8px;
     }
 
     .topbar {
@@ -328,6 +350,15 @@
       .wrap {
         padding: 8px;
       }
+      .languageBar {
+        justify-content: stretch;
+      }
+      .languageBar label {
+        min-width: max-content;
+      }
+      .languageBar select {
+        width: 100%;
+      }
       .topbar,
       .game {
         grid-template-columns: 1fr;
@@ -356,15 +387,30 @@
 </head>
 <body>
   <div class="wrap">
+    <div class="languageBar">
+      <label id="languageLabel" for="language">言語</label>
+      <select id="language" aria-label="Language">
+        <option value="ja">日本語</option>
+        <option value="en">English</option>
+        <option value="fr">Français</option>
+        <option value="ko">한국어</option>
+        <option value="zh-CN">中文简体</option>
+        <option value="zh-TW">中文繁體</option>
+        <option value="th">ไทย</option>
+        <option value="id">Indonesia</option>
+        <option value="vi">Tiếng Việt</option>
+      </select>
+    </div>
+
     <div class="topbar">
       <div class="title">
-        <h1>ずっこけぬこ</h1>
-        <div class="tag">ゲーム</div>
+        <h1 id="titleText">ずっこけぬこ</h1>
+        <div class="tag" id="tagText">ゲーム</div>
       </div>
       <div class="hud" aria-live="polite">
-        <div class="meter"><span>スコア</span><strong id="score">0</strong></div>
-        <div class="meter"><span>ベスト</span><strong id="best">0</strong></div>
-        <div class="meter"><span>合体</span><strong id="combo">0</strong></div>
+        <div class="meter"><span id="scoreLabel">スコア</span><strong id="score">0</strong></div>
+        <div class="meter"><span id="bestLabel">ベスト</span><strong id="best">0</strong></div>
+        <div class="meter"><span id="comboLabel">合体</span><strong id="combo">0</strong></div>
       </div>
     </div>
 
@@ -378,7 +424,7 @@
         <canvas id="game" width="520" height="660"></canvas>
         <div class="over" id="over">
           <div class="overPanel">
-            <strong>GAME Oニャー</strong>
+            <strong id="gameOverTitle">GAME Oニャー</strong>
             <div id="finalScore">スコア 0</div>
             <button id="again" style="margin-top:14px;width:100%;">もう一回</button>
           </div>
@@ -389,7 +435,7 @@
         <div class="nextBox">
           <div class="nextIcon"><img id="nextImg" alt="" src="__NUKO_IMAGE__" /></div>
           <div class="nextText">
-            <span>つぎ</span>
+            <span id="nextLabel">つぎ</span>
             <strong id="nextName">すんごい小さいぬこ</strong>
           </div>
         </div>
@@ -411,9 +457,16 @@
   (() => {
     const { Engine, World, Bodies, Body, Events, Composite } = Matter;
 
+    const languageSelect = document.getElementById("language");
+    const languageLabel = document.getElementById("languageLabel");
+    const titleText = document.getElementById("titleText");
+    const tagText = document.getElementById("tagText");
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const stage = document.getElementById("stage");
+    const scoreLabel = document.getElementById("scoreLabel");
+    const bestLabel = document.getElementById("bestLabel");
+    const comboLabel = document.getElementById("comboLabel");
     const scoreEl = document.getElementById("score");
     const bestEl = document.getElementById("best");
     const comboEl = document.getElementById("combo");
@@ -421,12 +474,14 @@
     const nextImg = document.getElementById("nextImg");
     const legendEl = document.getElementById("legend");
     const over = document.getElementById("over");
+    const gameOverTitle = document.getElementById("gameOverTitle");
     const finalScore = document.getElementById("finalScore");
     const resetBtn = document.getElementById("reset");
     const againBtn = document.getElementById("again");
     const pauseBtn = document.getElementById("pause");
     const musicBtn = document.getElementById("music");
     const message = document.getElementById("message");
+    const nextLabel = document.getElementById("nextLabel");
 
     const W = 520;
     const H = 660;
@@ -441,14 +496,243 @@
     bgm.loop = true;
     bgm.volume = 0.34;
 
+    const SUPPORTED_LANGS = ["ja", "en", "fr", "ko", "zh-CN", "zh-TW", "th", "id", "vi"];
+    const I18N = {
+      ja: {
+        language: "言語",
+        title: "ずっこけぬこ",
+        tag: "ゲーム",
+        score: "スコア",
+        best: "ベスト",
+        combo: "合体",
+        next: "つぎ",
+        reset: "リセット",
+        pause: "一時停止",
+        resume: "再開",
+        again: "もう一回",
+        bgmOn: "BGM ON",
+        bgmOff: "BGM OFF",
+        defaultMessage: "同じ大きさのぬこ同士で、ひとまわり大きなぬこへ。",
+        merge: "{name} にずっこけ合体",
+        maxBonus: "でかでかぬこ、はじけるボーナス",
+        gameOverTitle: "GAME Oニャー",
+        gameOverMessage: "注意線にぬこが溜まりました",
+        finalScore: "スコア {score}",
+        pausedMessage: "ぬこ休憩中",
+        resumedMessage: "再開しました",
+        danger: "ここまできたらずっこけ注意",
+        levels: ["すんごい小さいぬこ", "ちいさいぬこ", "中くらいのぬこ", "大きいぬこ", "かなり大きいぬこ", "どっしりぬこ", "でかでかぬこ"],
+      },
+      en: {
+        language: "Language",
+        title: "Zukkoke Nuko",
+        tag: "Game",
+        score: "Score",
+        best: "Best",
+        combo: "Merges",
+        next: "Next",
+        reset: "Reset",
+        pause: "Pause",
+        resume: "Resume",
+        again: "Again",
+        bgmOn: "BGM ON",
+        bgmOff: "BGM OFF",
+        defaultMessage: "Merge matching cats into a bigger one.",
+        merge: "{name} stumble-merged",
+        maxBonus: "Huge nuko bonus burst",
+        gameOverTitle: "GAME O-Nyaa",
+        gameOverMessage: "Cats piled up past the warning line.",
+        finalScore: "Score {score}",
+        pausedMessage: "Nuko break",
+        resumedMessage: "Resumed",
+        danger: "Wobble warning line",
+        levels: ["Very tiny nuko", "Small nuko", "Medium nuko", "Large nuko", "Very large nuko", "Heavy nuko", "Huge nuko"],
+      },
+      fr: {
+        language: "Langue",
+        title: "Zukkoke Nuko",
+        tag: "Jeu",
+        score: "Score",
+        best: "Record",
+        combo: "Fusions",
+        next: "Suivant",
+        reset: "Recommencer",
+        pause: "Pause",
+        resume: "Reprendre",
+        again: "Encore",
+        bgmOn: "BGM ON",
+        bgmOff: "BGM OFF",
+        defaultMessage: "Fusionnez deux chats de même taille en un plus grand.",
+        merge: "{name} fusionné",
+        maxBonus: "Bonus du nuko géant",
+        gameOverTitle: "GAME O-Miaou",
+        gameOverMessage: "Les chats ont dépassé la ligne d'alerte.",
+        finalScore: "Score {score}",
+        pausedMessage: "Pause nuko",
+        resumedMessage: "Repris",
+        danger: "Ligne d'alerte",
+        levels: ["Nuko minuscule", "Petit nuko", "Nuko moyen", "Grand nuko", "Très grand nuko", "Nuko lourd", "Nuko géant"],
+      },
+      ko: {
+        language: "언어",
+        title: "즈코케 누코",
+        tag: "게임",
+        score: "점수",
+        best: "최고",
+        combo: "합체",
+        next: "다음",
+        reset: "리셋",
+        pause: "일시정지",
+        resume: "재개",
+        again: "다시 하기",
+        bgmOn: "BGM ON",
+        bgmOff: "BGM OFF",
+        defaultMessage: "같은 크기의 누코를 합쳐 더 큰 누코로 만드세요.",
+        merge: "{name} 합체",
+        maxBonus: "거대 누코 보너스",
+        gameOverTitle: "GAME O-냐",
+        gameOverMessage: "주의선 위로 누코가 쌓였습니다.",
+        finalScore: "점수 {score}",
+        pausedMessage: "누코 휴식 중",
+        resumedMessage: "재개했습니다",
+        danger: "여기부터 넘어짐 주의",
+        levels: ["아주 작은 누코", "작은 누코", "중간 누코", "큰 누코", "꽤 큰 누코", "묵직한 누코", "거대 누코"],
+      },
+      "zh-CN": {
+        language: "语言",
+        title: "摔倒猫猫",
+        tag: "游戏",
+        score: "分数",
+        best: "最高",
+        combo: "合成",
+        next: "下一个",
+        reset: "重置",
+        pause: "暂停",
+        resume: "继续",
+        again: "再来一次",
+        bgmOn: "BGM ON",
+        bgmOff: "BGM OFF",
+        defaultMessage: "合成相同大小的猫，变成更大的猫。",
+        merge: "合成了{name}",
+        maxBonus: "超大猫猫奖励",
+        gameOverTitle: "GAME O喵",
+        gameOverMessage: "猫猫堆过警戒线了。",
+        finalScore: "分数 {score}",
+        pausedMessage: "猫猫休息中",
+        resumedMessage: "已继续",
+        danger: "到这里就要小心摔倒",
+        levels: ["超小猫猫", "小猫猫", "中等猫猫", "大猫猫", "很大猫猫", "厚重猫猫", "超大猫猫"],
+      },
+      "zh-TW": {
+        language: "語言",
+        title: "跌倒貓貓",
+        tag: "遊戲",
+        score: "分數",
+        best: "最高",
+        combo: "合成",
+        next: "下一個",
+        reset: "重置",
+        pause: "暫停",
+        resume: "繼續",
+        again: "再來一次",
+        bgmOn: "BGM ON",
+        bgmOff: "BGM OFF",
+        defaultMessage: "合成相同大小的貓，變成更大的貓。",
+        merge: "合成了{name}",
+        maxBonus: "超大貓貓獎勵",
+        gameOverTitle: "GAME O喵",
+        gameOverMessage: "貓貓堆過警戒線了。",
+        finalScore: "分數 {score}",
+        pausedMessage: "貓貓休息中",
+        resumedMessage: "已繼續",
+        danger: "到這裡就要小心跌倒",
+        levels: ["超小貓貓", "小貓貓", "中等貓貓", "大貓貓", "很大貓貓", "厚重貓貓", "超大貓貓"],
+      },
+      th: {
+        language: "ภาษา",
+        title: "ซุกโคเกะนุโกะ",
+        tag: "เกม",
+        score: "คะแนน",
+        best: "สูงสุด",
+        combo: "รวมร่าง",
+        next: "ถัดไป",
+        reset: "รีเซ็ต",
+        pause: "พัก",
+        resume: "เล่นต่อ",
+        again: "อีกครั้ง",
+        bgmOn: "BGM ON",
+        bgmOff: "BGM OFF",
+        defaultMessage: "จับแมวขนาดเดียวกันมารวมให้ใหญ่ขึ้น",
+        merge: "รวมเป็น {name}",
+        maxBonus: "โบนัสนุโกะยักษ์",
+        gameOverTitle: "GAME O-เหมียว",
+        gameOverMessage: "แมวล้นเส้นเตือนแล้ว",
+        finalScore: "คะแนน {score}",
+        pausedMessage: "นุโกะพักอยู่",
+        resumedMessage: "เล่นต่อแล้ว",
+        danger: "ถึงเส้นนี้ต้องระวัง",
+        levels: ["นุโกะจิ๋วมาก", "นุโกะเล็ก", "นุโกะกลาง", "นุโกะใหญ่", "นุโกะใหญ่มาก", "นุโกะหนักแน่น", "นุโกะยักษ์"],
+      },
+      id: {
+        language: "Bahasa",
+        title: "Zukkoke Nuko",
+        tag: "Game",
+        score: "Skor",
+        best: "Terbaik",
+        combo: "Gabung",
+        next: "Berikutnya",
+        reset: "Reset",
+        pause: "Jeda",
+        resume: "Lanjut",
+        again: "Main lagi",
+        bgmOn: "BGM ON",
+        bgmOff: "BGM OFF",
+        defaultMessage: "Gabungkan kucing berukuran sama menjadi lebih besar.",
+        merge: "{name} tergabung",
+        maxBonus: "Bonus nuko raksasa",
+        gameOverTitle: "GAME O-Meong",
+        gameOverMessage: "Kucing menumpuk melewati garis peringatan.",
+        finalScore: "Skor {score}",
+        pausedMessage: "Nuko istirahat",
+        resumedMessage: "Dilanjutkan",
+        danger: "Garis peringatan jatuh",
+        levels: ["Nuko sangat kecil", "Nuko kecil", "Nuko sedang", "Nuko besar", "Nuko sangat besar", "Nuko berat", "Nuko raksasa"],
+      },
+      vi: {
+        language: "Ngôn ngữ",
+        title: "Zukkoke Nuko",
+        tag: "Trò chơi",
+        score: "Điểm",
+        best: "Cao nhất",
+        combo: "Ghép",
+        next: "Tiếp theo",
+        reset: "Đặt lại",
+        pause: "Tạm dừng",
+        resume: "Tiếp tục",
+        again: "Chơi lại",
+        bgmOn: "BGM ON",
+        bgmOff: "BGM OFF",
+        defaultMessage: "Ghép mèo cùng cỡ để tạo mèo lớn hơn.",
+        merge: "Đã ghép thành {name}",
+        maxBonus: "Thưởng nuko khổng lồ",
+        gameOverTitle: "GAME O-Meo",
+        gameOverMessage: "Mèo đã chất quá vạch cảnh báo.",
+        finalScore: "Điểm {score}",
+        pausedMessage: "Nuko đang nghỉ",
+        resumedMessage: "Đã tiếp tục",
+        danger: "Vạch cảnh báo ngã",
+        levels: ["Nuko siêu nhỏ", "Nuko nhỏ", "Nuko vừa", "Nuko lớn", "Nuko rất lớn", "Nuko nặng", "Nuko khổng lồ"],
+      },
+    };
+
     const levels = [
-      { name: "すんごい小さいぬこ", radius: 21, score: 10, color: "#ef6b73" },
-      { name: "ちいさいぬこ", radius: 39, score: 25, color: "#f2bd48" },
-      { name: "中くらいのぬこ", radius: 58, score: 60, color: "#77a845" },
-      { name: "大きいぬこ", radius: 76, score: 140, color: "#5a9dd8" },
-      { name: "かなり大きいぬこ", radius: 94, score: 320, color: "#8a72c6" },
-      { name: "どっしりぬこ", radius: 113, score: 720, color: "#c06f43" },
-      { name: "でかでかぬこ", radius: 131, score: 1600, color: "#4f7f76" },
+      { radius: 21, score: 10, color: "#ef6b73" },
+      { radius: 39, score: 25, color: "#f2bd48" },
+      { radius: 58, score: 60, color: "#77a845" },
+      { radius: 76, score: 140, color: "#5a9dd8" },
+      { radius: 94, score: 320, color: "#8a72c6" },
+      { radius: 113, score: 720, color: "#c06f43" },
+      { radius: 131, score: 1600, color: "#4f7f76" },
     ];
     const spawnBag = [0, 0, 1, 1, 2, 2, 3];
 
@@ -486,8 +770,77 @@
       }
     }
 
+    function detectLanguage() {
+      const browserLang = (navigator.language || "ja").toLowerCase();
+      if (browserLang.startsWith("ja")) return "ja";
+      if (browserLang.startsWith("fr")) return "fr";
+      if (browserLang.startsWith("ko")) return "ko";
+      if (browserLang.startsWith("th")) return "th";
+      if (browserLang.startsWith("id")) return "id";
+      if (browserLang.startsWith("vi")) return "vi";
+      if (browserLang.startsWith("zh")) {
+        return /tw|hk|mo|hant/.test(browserLang) ? "zh-TW" : "zh-CN";
+      }
+      if (browserLang.startsWith("en")) return "en";
+      return "ja";
+    }
+
+    function readLanguage() {
+      try {
+        const saved = localStorage.getItem("zuccoke-nuko-lang");
+        if (SUPPORTED_LANGS.includes(saved)) return saved;
+      } catch (_) {
+      }
+      return detectLanguage();
+    }
+
+    function saveLanguage(value) {
+      try {
+        localStorage.setItem("zuccoke-nuko-lang", value);
+      } catch (_) {
+      }
+    }
+
+    let currentLang = readLanguage();
+
+    function activeText() {
+      return I18N[currentLang] || I18N.ja;
+    }
+
+    function t(key, values = {}) {
+      const text = activeText()[key] ?? I18N.ja[key] ?? key;
+      return String(text).replace(/\{(\w+)\}/g, (_, token) => values[token] ?? "");
+    }
+
+    function levelName(index) {
+      return activeText().levels[index] || I18N.ja.levels[index] || "";
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = currentLang;
+      languageSelect.value = currentLang;
+      languageLabel.textContent = t("language");
+      titleText.textContent = t("title");
+      tagText.textContent = t("tag");
+      scoreLabel.textContent = t("score");
+      bestLabel.textContent = t("best");
+      comboLabel.textContent = t("combo");
+      nextLabel.textContent = t("next");
+      gameOverTitle.textContent = t("gameOverTitle");
+      resetBtn.textContent = t("reset");
+      againBtn.textContent = t("again");
+      pauseBtn.textContent = paused ? t("resume") : t("pause");
+      finalScore.textContent = t("finalScore", { score });
+      updateMusicButton();
+      makeLegend();
+      updateHud();
+      if (!gameOver) {
+        message.textContent = paused ? t("pausedMessage") : t("defaultMessage");
+      }
+    }
+
     function updateMusicButton() {
-      musicBtn.textContent = musicEnabled ? "BGM ON" : "BGM OFF";
+      musicBtn.textContent = musicEnabled ? t("bgmOn") : t("bgmOff");
       musicBtn.style.opacity = musicEnabled ? "1" : "0.72";
     }
 
@@ -527,7 +880,7 @@
         const row = document.createElement("div");
         row.className = "legendRow";
         row.style.color = level.color;
-        row.innerHTML = `<span class="swatch"></span><span>${level.name}</span><b>${index + 1}</b>`;
+        row.innerHTML = `<span class="swatch"></span><span>${levelName(index)}</span><b>${index + 1}</b>`;
         legendEl.appendChild(row);
       });
     }
@@ -543,7 +896,7 @@
       scoreEl.textContent = String(score);
       bestEl.textContent = String(best);
       comboEl.textContent = String(combo);
-      nextNameEl.textContent = levels[nextLevel].name;
+      nextNameEl.textContent = levelName(nextLevel);
       const previewSize = Math.max(34, Math.min(88, levels[nextLevel].radius * 2.15));
       nextImg.style.width = `${previewSize}px`;
       nextImg.style.height = "auto";
@@ -653,12 +1006,12 @@
         });
         addParticles(x, y, levels[next].color, 16);
         chirp(320 + next * 110, 0.055, "triangle", 0.04);
-        message.textContent = `${levels[next].name} にずっこけ合体`;
+        message.textContent = t("merge", { name: levelName(next) });
       } else {
         score += 620;
         addParticles(x, y, levels[levelIndex].color, 32);
         chirp(880, 0.08, "sine", 0.05);
-        message.textContent = "でかでかぬこ、はじけるボーナス";
+        message.textContent = t("maxBonus");
       }
       best = Math.max(best, score);
       saveBest(best);
@@ -714,8 +1067,8 @@
     function endGame() {
       gameOver = true;
       over.classList.add("show");
-      finalScore.textContent = `スコア ${score}`;
-      message.textContent = "注意線にぬこが溜まりました";
+      finalScore.textContent = t("finalScore", { score });
+      message.textContent = t("gameOverMessage");
       chirp(120, 0.12, "sawtooth", 0.04);
     }
 
@@ -760,8 +1113,8 @@
       ctx.setLineDash([]);
 
       ctx.fillStyle = "rgba(239, 107, 115, 0.72)";
-      ctx.font = "900 13px 'Yu Gothic UI', sans-serif";
-      ctx.fillText("ここまできたらずっこけ注意", 24, DANGER_Y - 10);
+      ctx.font = "900 13px Arial, system-ui, 'Segoe UI', 'Noto Sans', sans-serif";
+      ctx.fillText(t("danger"), 24, DANGER_Y - 10, W - 48);
 
       ctx.strokeStyle = "rgba(122, 87, 53, 0.18)";
       ctx.lineWidth = 3;
@@ -834,9 +1187,9 @@
       lastDropAt = 0;
       dangerSince = 0;
       lastTime = 0;
-      pauseBtn.textContent = "一時停止";
+      pauseBtn.textContent = t("pause");
       over.classList.remove("show");
-      message.textContent = "同じ大きさのぬこ同士で、ひとまわり大きなぬこへ。";
+      message.textContent = t("defaultMessage");
       createWalls();
       bindCollisions();
       updateHud();
@@ -858,6 +1211,11 @@
       if (event.key === " " || event.key === "Enter") drop();
       pointerX = Math.max(28, Math.min(W - 28, pointerX));
     });
+    languageSelect.addEventListener("change", () => {
+      currentLang = languageSelect.value;
+      saveLanguage(currentLang);
+      applyLanguage();
+    });
     resetBtn.addEventListener("click", reset);
     againBtn.addEventListener("click", reset);
     musicBtn.addEventListener("click", () => {
@@ -866,23 +1224,22 @@
       updateMusicButton();
       if (musicEnabled) {
         startMusic();
-        message.textContent = "BGM ON";
+        message.textContent = t("bgmOn");
       } else {
         stopMusic();
-        message.textContent = "BGM OFF";
+        message.textContent = t("bgmOff");
       }
     });
     pauseBtn.addEventListener("click", () => {
       if (gameOver) return;
       paused = !paused;
-      pauseBtn.textContent = paused ? "再開" : "一時停止";
-      message.textContent = paused ? "ぬこ休憩中" : "再開しました";
+      pauseBtn.textContent = paused ? t("resume") : t("pause");
+      message.textContent = paused ? t("pausedMessage") : t("resumedMessage");
     });
     window.addEventListener("resize", resizeCanvas);
 
-    makeLegend();
+    applyLanguage();
     resizeCanvas();
-    updateMusicButton();
     reset();
   })();
   </script>
